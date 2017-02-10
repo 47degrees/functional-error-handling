@@ -1,15 +1,16 @@
 import feh.PlayListPresenter.View
+import scala.util.{Failure, Success, Try}
 
 package object feh {
 
   /** DataSource */
   class DataSource[I, T](database: Map[I, T]) {
-    def get(id: I): Option[T] = database.get(id)
+    def get(id: I): Try[T] = Try(database(id))
   }
 
   /** Repository */
   class Repository[I, T](dataSource: DataSource[I, T]) {
-    def getWithIds(ids: I*): List[T] = ids.toList.flatMap(dataSource.get)
+    def getWithIds(ids: I*): List[Try[T]] = ids.toList.map(dataSource.get)
   }
 
   /** Model */
@@ -18,13 +19,13 @@ package object feh {
   case class Song(title: String)
 
   class Playlist(cr: Repository[SongId, Song]) {
-    def songs(songsIds: List[SongId]): List[Song] =
+    def songs(songsIds: List[SongId]): List[Try[Song]] =
       cr.getWithIds(songsIds:_*)
   }
 
   /** UseCase */
   class PlaySongsUseCase(playlist: Playlist) {
-    def execute(songsIds: List[SongId]): List[Song] =
+    def execute(songsIds: List[SongId]): List[Try[Song]] =
       playlist.songs(songsIds)
   }
 
@@ -32,12 +33,20 @@ package object feh {
   class PlayListPresenter(view: PlayListPresenter.View, useCase: PlaySongsUseCase) {
     def onUserRequestsPlayList(songsIds: List[SongId]): Unit = {
       val songs = useCase.execute(songsIds)
-      view.showPlayList(songs)
+      val found = songs.collect {
+        case Success(s) => s
+      }
+      val errors = songs.collect {
+        case Failure(e) => e
+      }
+      view.showPlayList(found)
+      view.showErrors(errors)
     }
   }
   object PlayListPresenter {
     trait View {
       def showPlayList(songs: List[Song]): Unit
+      def showErrors(errors: List[Throwable]): Unit
     }
   }
 
@@ -60,7 +69,8 @@ object Application {
     val playlist = new Playlist(repository)
     val useCase = new PlaySongsUseCase(playlist)
     val view = new View {
-      override def showPlayList(songs: List[Song]): Unit = println(songs)
+      override def showPlayList(songs: List[Song]): Unit = songs.foreach(println)
+      override def showErrors(errors: List[Throwable]): Unit = errors.foreach(println)
     }
     val presenter = new PlayListPresenter(view, useCase)
     presenter.onUserRequestsPlayList(List(1,2,3,4))
