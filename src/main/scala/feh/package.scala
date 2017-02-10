@@ -4,12 +4,12 @@ package object feh {
 
   /** DataSource */
   class DataSource[I, T](database: Map[I, T]) {
-    def get(id: I): T = database(id)
+    def get(id: I): Option[T] = database.get(id)
   }
 
   /** Repository */
   class Repository[I, T](dataSource: DataSource[I, T]) {
-    def getWithIds(ids: I*): List[T] = ids.toList.map(dataSource.get)
+    def getWithIds(ids: I*): List[T] = ids.toList.flatMap(dataSource.get)
   }
 
   /** Model */
