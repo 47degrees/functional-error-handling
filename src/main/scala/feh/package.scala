@@ -52,7 +52,7 @@ object Application {
     val database = Map(
       1 -> Song("Song 1"),
       2 -> Song("Song 2"),
-      3 -> Song("Song 3"),
+      //3 -> Song("Song 3"),
       4 -> Song("Song 4")
     )
     val dataSource = new DataSource[SongId, Song](database)
