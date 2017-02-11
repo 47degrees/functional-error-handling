@@ -1,4 +1,5 @@
 import feh.PlayListPresenter.View
+import fs2.Task
 
 import scala.util.Try
 
@@ -13,7 +14,7 @@ package object feh {
 
   /** Repository */
   class Repository[I, T](dataSource: DataSource[I, T]) {
-    def getWithIds(ids: I*): Seq[Either[Throwable, T]] =
+    def getWithIds(ids: I*): List[Either[Throwable, T]] =
       ids.toList.map(dataSource.get)
   }
 
@@ -47,7 +48,7 @@ package object feh {
 
   /** Presenter */
   class PlayListPresenter(view: PlayListPresenter.View, useCase: PlaySongsUseCase) {
-    def onUserRequestsPlayList(songsIds: List[SongId]): Unit = {
+    def onUserRequestsPlayList(songsIds: List[SongId]): Task[Unit] = Task.delay {
       val songs = useCase.execute(songsIds)
       val found = songs.collect {
         case Right(s) => s
@@ -57,12 +58,14 @@ package object feh {
       }
       view.showPlayList(found)
       view.showErrors(errors)
+      view.callToUnprincipledJavaLib()
     }
   }
   object PlayListPresenter {
     trait View {
       def showPlayList(songs: List[Song]): Unit
       def showErrors(errors: List[PlayListError]): Unit
+      def callToUnprincipledJavaLib(): Unit = throw new RuntimeException("Boom!")
     }
   }
 
@@ -89,6 +92,10 @@ object Application {
       override def showErrors(errors: List[PlayListError]): Unit = errors.foreach(println)
     }
     val presenter = new PlayListPresenter(view, useCase)
-    presenter.onUserRequestsPlayList(List(1,2,3,4))
+    presenter
+      .onUserRequestsPlayList(List(1,2,3,4))
+      .unsafeAttemptRun()
+      .left
+      .foreach(println)
   }
 }
