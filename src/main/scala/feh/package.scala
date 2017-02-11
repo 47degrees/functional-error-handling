@@ -4,6 +4,8 @@ import scala.util.Try
 
 package object feh {
 
+  type Result[A] = List[Either[PlayListError, A]]
+
   /** DataSource */
   class DataSource[I, T](database: Map[I, T]) {
     def get(id: I): Either[Throwable, T] = Try(database(id)).toEither
@@ -11,7 +13,7 @@ package object feh {
 
   /** Repository */
   class Repository[I, T](dataSource: DataSource[I, T]) {
-    def getWithIds(ids: I*): List[Either[Throwable, T]] =
+    def getWithIds(ids: I*): Seq[Either[Throwable, T]] =
       ids.toList.map(dataSource.get)
   }
 
@@ -26,7 +28,7 @@ package object feh {
   case class Song(title: String, requiresSubscription: Boolean = false)
 
   class Playlist(cr: Repository[SongId, Song]) {
-    def songs(songsIds: List[SongId]): List[Either[PlayListError, Song]] =
+    def songs(songsIds: List[SongId]): Result[Song] =
       for {
         id <- songsIds
         eitherSong <- cr.getWithIds(id)
@@ -39,7 +41,7 @@ package object feh {
 
   /** UseCase */
   class PlaySongsUseCase(playlist: Playlist) {
-    def execute(songsIds: List[SongId]): List[Either[PlayListError, Song]] =
+    def execute(songsIds: List[SongId]): Result[Song] =
       playlist.songs(songsIds)
   }
 
