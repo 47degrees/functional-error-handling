@@ -11,22 +11,35 @@ package object feh {
 
   /** Repository */
   class Repository[I, T](dataSource: DataSource[I, T]) {
-    def getWithIds(ids: I*): List[Either[Throwable, T]] = ids.toList.map(dataSource.get)
+    def getWithIds(ids: I*): List[Either[Throwable, T]] =
+      ids.toList.map(dataSource.get)
   }
 
   /** Model */
   type SongId = Int
 
-  case class Song(title: String)
+  sealed trait PlayListError
+  case class SongNotFound(id: SongId) extends PlayListError
+  case class SubscriptionRequired(song: Song) extends PlayListError
+  case class UnknownDataSourceError(e : Throwable) extends PlayListError
+
+  case class Song(title: String, requiresSubscription: Boolean = false)
 
   class Playlist(cr: Repository[SongId, Song]) {
-    def songs(songsIds: List[SongId]): List[Either[Throwable, Song]] =
-      cr.getWithIds(songsIds:_*)
+    def songs(songsIds: List[SongId]): List[Either[PlayListError, Song]] =
+      for {
+        id <- songsIds
+        eitherSong <- cr.getWithIds(id)
+      } yield eitherSong match {
+        case Right(s) => if (s.requiresSubscription) Left(SubscriptionRequired(s)) else Right(s)
+        case Left(e : NoSuchElementException) => Left(SongNotFound(id))
+        case Left(e : Throwable) => Left(UnknownDataSourceError(e))
+      }
   }
 
   /** UseCase */
   class PlaySongsUseCase(playlist: Playlist) {
-    def execute(songsIds: List[SongId]): List[Either[Throwable, Song]] =
+    def execute(songsIds: List[SongId]): List[Either[PlayListError, Song]] =
       playlist.songs(songsIds)
   }
 
@@ -47,7 +60,7 @@ package object feh {
   object PlayListPresenter {
     trait View {
       def showPlayList(songs: List[Song]): Unit
-      def showErrors(errors: List[Throwable]): Unit
+      def showErrors(errors: List[PlayListError]): Unit
     }
   }
 
@@ -61,7 +74,7 @@ object Application {
   def main(args: Array[String]): Unit = {
     val database = Map(
       1 -> Song("Song 1"),
-      2 -> Song("Song 2"),
+      2 -> Song("Song 2", requiresSubscription = true),
       //3 -> Song("Song 3"),
       4 -> Song("Song 4")
     )
@@ -71,7 +84,7 @@ object Application {
     val useCase = new PlaySongsUseCase(playlist)
     val view = new View {
       override def showPlayList(songs: List[Song]): Unit = songs.foreach(println)
-      override def showErrors(errors: List[Throwable]): Unit = errors.foreach(println)
+      override def showErrors(errors: List[PlayListError]): Unit = errors.foreach(println)
     }
     val presenter = new PlayListPresenter(view, useCase)
     presenter.onUserRequestsPlayList(List(1,2,3,4))
