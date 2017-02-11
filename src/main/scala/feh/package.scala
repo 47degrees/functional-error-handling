@@ -1,16 +1,17 @@
 import feh.PlayListPresenter.View
-import scala.util.{Failure, Success, Try}
+
+import scala.util.Try
 
 package object feh {
 
   /** DataSource */
   class DataSource[I, T](database: Map[I, T]) {
-    def get(id: I): Try[T] = Try(database(id))
+    def get(id: I): Either[Throwable, T] = Try(database(id)).toEither
   }
 
   /** Repository */
   class Repository[I, T](dataSource: DataSource[I, T]) {
-    def getWithIds(ids: I*): List[Try[T]] = ids.toList.map(dataSource.get)
+    def getWithIds(ids: I*): List[Either[Throwable, T]] = ids.toList.map(dataSource.get)
   }
 
   /** Model */
@@ -19,13 +20,13 @@ package object feh {
   case class Song(title: String)
 
   class Playlist(cr: Repository[SongId, Song]) {
-    def songs(songsIds: List[SongId]): List[Try[Song]] =
+    def songs(songsIds: List[SongId]): List[Either[Throwable, Song]] =
       cr.getWithIds(songsIds:_*)
   }
 
   /** UseCase */
   class PlaySongsUseCase(playlist: Playlist) {
-    def execute(songsIds: List[SongId]): List[Try[Song]] =
+    def execute(songsIds: List[SongId]): List[Either[Throwable, Song]] =
       playlist.songs(songsIds)
   }
 
@@ -34,10 +35,10 @@ package object feh {
     def onUserRequestsPlayList(songsIds: List[SongId]): Unit = {
       val songs = useCase.execute(songsIds)
       val found = songs.collect {
-        case Success(s) => s
+        case Right(s) => s
       }
       val errors = songs.collect {
-        case Failure(e) => e
+        case Left(e) => e
       }
       view.showPlayList(found)
       view.showErrors(errors)
