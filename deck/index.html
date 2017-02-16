@@ -4,13 +4,13 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>reveal.js</title>
+		<title>Functional Error Handling</title>
 
 		<link rel="stylesheet" href="css/reveal.css">
-		<link rel="stylesheet" href="css/theme/black.css">
+		<link rel="stylesheet" href="custom/css/theme.css">
 
 		<!-- Theme used for syntax highlighting of code -->
-		<link rel="stylesheet" href="lib/css/zenburn.css">
+		<link rel="stylesheet" href="custom/css/dracula.css">
 
 		<!-- Printing and PDF exports -->
 		<script>
@@ -24,8 +24,13 @@
 	<body>
 		<div class="reveal">
 			<div class="slides">
-				<section>Slide 1</section>
-				<section>Slide 2</section>
+				<section data-background-iframe="http://www.youtube.com/embed/Sfpe28mv9n0?autoplay=1&controls=0&fs=0&iv_load_policy=3&loop=1&rel=0&showinfo=0&disablekb=1&start=185">
+					<a href="https://www.47deg.com/" target="_blank"><img src="custom/images/47-brand-white.png" height="80px"/></a>
+					<h2>>>= FUNCTIONAL ERROR HANDLING >>=</h2>
+					<h6><a href="https://twitter.com/raulraja" target="_blank">@raulraja</a></h6>
+					<h6><a href="https://twitter.com/47deg" target="_blank">@47deg</a></h6>
+				</section>
+				<section data-markdown="README.md" data-separator-notes="^Note:"></section>
 			</div>
 		</div>
 
@@ -36,12 +41,18 @@
 			// More info https://github.com/hakimel/reveal.js#configuration
 			Reveal.initialize({
 				history: true,
-
+				transition: 'none',
+				slideNumber: true,
+				help: true,
+				width: "100%",
+				height: "100%",
+				margin: 0,
 				// More info https://github.com/hakimel/reveal.js#dependencies
 				dependencies: [
 					{ src: 'plugin/markdown/marked.js' },
 					{ src: 'plugin/markdown/markdown.js' },
 					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'node_modules/reveal.js-menu/menu.js' },
 					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
 				]
 			});
