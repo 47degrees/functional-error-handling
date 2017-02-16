@@ -209,8 +209,10 @@ body {
 .reveal pre {
   display: block;
   position: relative;
-  width: 90%;
-  margin: 20px auto;
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
   text-align: left;
   font-size: 0.90em;
   font-family: "pragmatapro";
