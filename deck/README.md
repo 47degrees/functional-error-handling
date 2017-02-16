@@ -1,74 +1,87 @@
-http://www.istockphoto.com/es/vector/bombas-en-rojo-gm501292545-43288582?st=_p_bomb
-
 # Functional Error Handling
 
 ---
 
-## Non-Functional Error Handling
+## Requirements
+
+1. Arm a Nuke launcher
+2. Aim toward a Target
+3. Launch a Nuke and impact the Target
 
 ---
 
-## Exceptions: Are side effects
+## Requirements
 
-```scala
-def add(a: Int, b: Int): Int = 
-  throw new RuntimeException("Surprise!")
-```
-Note:
-Can leave programs in inconsistent state
+1. __arm__ a __Nuke__ launcher
+2. __aim__ toward a __Target__
+3. __launch__ a __Nuke__ and __Impact__ the __target__
 
 ---
 
-# Exceptions
-
-## Exceptions: Breaks Referential Transparency
+## Requirements
 
 ```scala
-def add(a: Int, b: Int): Int = 
-  throw new RuntimeException("Surprise!")
+/** model */
+case class Nuke()
+case class Target()
+case class Impacted()
+
+def arm: Nuke = ???
+def aim: Target = ???
+def launch(target: Target, nuke: Nuke): Impacted = ???
 ```
 
-Compiler can't replace `add(1,1)` for `1 + 1`
+---
+
+## Exceptions
+
+```scala
+def arm: Nuke = throw new RuntimeException("SystemOffline")
+def aim: Target = throw new RuntimeException("RotationNeedsOil")
+def launch(target: Target, nuke: Nuke): Impacted = Impacted()
+```
+
+---
+
+## Exceptions
+
+```scala
+def arm: Nuke = throw new RuntimeException("SystemOffline")
+def aim: Target = throw new RuntimeException("RotationNeedsOil")
+def launch(target: Target, nuke: Nuke): Impacted = Impacted()
+```
+
+Break Referential transparency
 
 ---
 
 ## Exceptions: Broken GOTO
 
 ```scala
-val db: Map[Int, String] = Map(1 -> "1", 2 -> "2")
-
-def dbFetch(ids: List[Int]): List[String] = 
- if (db.contains(ids)) db(ids) else throw new NoSuchElementException("some $ids not in db")
-
-def fetchItems(ids: List[Int]): List[String] =
-    dbFetch(ids)
-    
-fetchItems(List(1,2))
+def arm: Nuke = throw new RuntimeException("SystemOffline")
+def aim: Target = throw new RuntimeException("RotationNeedsOil")
+def launch(target: Target, nuke: Nuke): Impacted = Impacted()
 ```
 
-All nice and pretty when in a sync context
+They are a broken GOTO
 
 ---
 
 ## Exceptions: Broken GOTO
 
 ```scala
-val db: Map[Int, String] = Map(1 -> "1", 2 -> "2")
+def arm: Nuke = throw new RuntimeException("SystemOffline")
+def aim: Target = throw new RuntimeException("RotationNeedsOil")
+def launch(target: Target, nuke: Nuke): Impacted = Impacted()
 
-def dbFetch(ids: List[Int]): List[String] = 
- if (db.contains(ids)) db(ids) else throw new NoSuchElementException("some $ids not in db")
-
-def fetchItems(ids: List[Int]): Future[List[String]] =
-    Future(dbFetch(ids))
-    
-fetchItems(List(1,2))
+def attack: Future[Impacted] = Future(launch(arm, aim))
 ```
 
-Behavior changes in async boundaries
+They are a broken GOTO... getting lost in async boundaries
 
 ---
 
-## Exceptions: Potentially costly to construct based on VM
+## Exceptions
 
 ```
 at java.lang.Throwable.fillInStackTrace(Throwable.java:-1)
@@ -85,33 +98,91 @@ at sun.misc.CharacterDecoder.decodeBuffer(CharacterDecoder.java:194)
 
 Abused to signal events in core libraries
 
-http://java-performance.info/throwing-an-exception-in-java-is-very-slow/
+---
+
+## Exceptions
+
+```java
+try {
+  doExceptionalStuff() //throws IllegalArgumentException
+} catch (Throwable e) { //too broad matches:
+    /*
+    VirtualMachineError
+    OutOfMemoryError
+    ThreadDeath
+    LinkageError
+    InterruptedException
+    ControlThrowable
+    NotImplementedError
+    */
+}
+```
+
+Unsealed hierarchies, root of all evil 😈 
 
 ---
 
-## Should we avoid exceptions at all cost? ##
+## Exceptions
 
-Yes, (in most cases)
+```java
+public class Throwable {
+    /**
+    * Fills in the execution stack trace. 
+    * This method records within this Throwable object information 
+    * about the current state of the stack frames for the current thread.
+    */
+    Throwable fillInStackTrace()
+}
+```
+
+Potentially costly to construct based on VM impl and your current Thread stack size
 
 ---
 
-## When it's bad to use exceptions? ##
+## Exceptions
+
+![Throwable Benchmark](custom/images/benchmark_throwable.png)
+
+> [The Hidden Performance costs of instantiating Throwables](http://normanmaurer.me/blog/2013/11/09/The-hidden-performance-costs-of-instantiating-Throwables/)
+> * New: Creating a new Throwable each time
+> * Lazy: Reusing a created Throwable in the method invocation.
+> * Static: Reusing a static Throwable with an empty stacktrace.
+
+---
+
+## Exceptions
+
+Poor choices when using exceptions
 
 - Modeling absence
 - Modeling known business cases that result in alternate paths
 - Async boundaries over unprincipled APIs (callbacks)
 - When people have no access to your source code
-- Almost Always
 
 ---
 
-## When it's ok to use exceptions? ##
+## Exceptions
 
 - When you don't expect someone to recover from it
-- When you are a contributor to the JVM in JVM internals
-- When you are showing others how bad throwing exceptions is
-- When you want to create caos and mayhem
-- (Almost) NEVER
+- When you are contributor to a JVM in JVM internals
+- When you want to create caos and mayhem to overthrow the government
+- In this talk
+- When you know what you are doing
+
+---
+
+## How do we model exceptional cases then?
+
+---
+
+# >>= 
+# MONADS!
+
+---
+
+## Option ##
+
+When modeling the potential absence of a value
 
 ---
 
@@ -149,51 +220,54 @@ def get: A //NoSuchElementException if empty (╯°□°）╯︵ ┻━┻
 
 ## Option ##
 
-Pain to deal with if your lang does not have proper Monads support
+How would our example look like?
 
 ```scala
-case class Country(isoCode: String)
-case class Address(street: String, country: Option[Country])
-case class Person(id: Int, address: Option[Address])
-
-def getCountry(person: Person): Option[Country] = {
-  var country: Option[Country] = null
-  if (person.address.isDefined) {
-    if (person.address.get.country.isDefined) {
-      country = person.address.get.country
-    }
-    else {
-      country = None
-    }
-  } else {
-    country = None
-  }
-  country
-}
+def arm: Option[Nuke] = None
+def aim: Option[Target] = None
+def launch(target: Target, nuke: Nuke): Option[Impacted] = Some(Impacted())
 ```
+
+---
 
 ## Option ##
 
-Easy to work with if your lang supports monadic comprehensions
+Pain to deal with if your lang does not have proper Monads or syntax support
 
 ```scala
-case class Country(isoCode: String)
-case class Address(street: String, country: Option[Country])
-case class Person(id: Int, address: Option[Address])
+def attackImperative: Option[Impacted] = {
+  var impact: Option[Impacted] = None
+  val optionNuke = arm
+  if (optionNuke.isDefined) {
+    val optionTarget = aim
+    if (optionTarget.isDefined) {
+      impact = launch(optionTarget.get, optionNuke.get)
+    }
+  }
+  impact
+}
+```
 
-def getCountry(person: Person): Option[Country] = 
+---
+
+## Option ##
+
+Easy to work with if your lang supports monad comprehensions or special syntax
+
+```scala
+def attackMonadic: Option[Impacted] =
   for {
-    address <- person.address
-    country <- address.country
-  } yield country
-
+    nuke <- arm
+    target <- aim
+    impact <- launch(target, nuke)
+  } yield impact
 ```
 
-Garbage
+---
 
-```scala
-def get: A //NoSuchElementException if empty (╯°□°）╯︵ ┻━┻
-```
+## Try ##
+
+When a computation may fail with a runtime exception
 
 ---
 
@@ -231,23 +305,41 @@ def get: T //throws the captured exception if not a Success (╯°□°）╯︵
 
 ## Try ##
 
-Pain to deal with if your lang does not have proper Monads support
+How would our example look like?
 
 ```scala
-def armNukes: Try[Nuke] = ???
-def aim: Try[Target] = ???
-def launchNukes(target: Target, nuke: Nuke): Try[Impacted] = ???
+def arm: Try[Nuke] = 
+  Try(throw new RuntimeException("SystemOffline"))
+  
+def aim: Try[Target] = 
+  Try(throw new RuntimeException("RotationNeedsOil"))
+  
+def launch(target: Target, nuke: Nuke): Try[Impacted] = 
+  Try(throw new RuntimeException("MissedByMeters"))
+```
 
-def attack: Try[Impacted] = {
+---
+
+## Try ##
+
+Pain to deal with if your lang does not have proper Monads or syntax support
+
+```scala
+def attackImperative: Try[Impacted] = {
   var impact: Try[Impacted] = null
-  val tryNuke = armNukes
+  var ex: Throwable = null
+  val tryNuke = arm
   if (tryNuke.isSuccess) {
     val tryTarget = aim
     if (tryTarget.isSuccess) {
-      impact = launchNukes(tryTarget.get, tryNuke.get)
+      impact = launch(tryTarget.get, tryNuke.get)
+    } else {
+      ex = tryTarget.failed.get
     }
+  } else {
+    ex = tryNuke.failed.get
   }
-  impact
+  if (impact != null) impact else Try(throw ex)
 }
 ```
 
@@ -258,15 +350,11 @@ def attack: Try[Impacted] = {
 Easy to work with if your lang supports monadic comprehensions
 
 ```scala
-def armNukes: Try[Nuke] = ???
-def aim: Try[Target] = ???
-def launchNukes(target: Target, nuke: Nuke): Try[Impacted] = ???
-
-def attack: Try[Impacted] = 
+def attackMonadic: Try[Impacted] =
   for {
-    nuke <- armNukes
+    nuke <- arm
     target <- aim
-    impact <- launchNukes(nuke, target)
+    impact <- launch(target, nuke)
   } yield impact
 ```
 
@@ -274,7 +362,13 @@ def attack: Try[Impacted] =
 
 ## Either ##
 
-When a computation may fail or branch paths with a known case
+When dealing with a known alternate return path
+
+---
+
+## Either ##
+
+When a computation may fail or dealing with known alternate return path
 
 ```scala
 sealed abstract class Either[+A, +B]
@@ -306,30 +400,58 @@ toOption.get, toTry.get //Looses information if not a Right (╯°□°）╯︵
 
 ## Either ##
 
-Pain to deal with if your lang does not have proper Monads support
+What goes on the `Left`?
+
+```scala
+def arm: Either[?, Nuke] = ???
+def aim: Either[?,Target] = ???
+def launch(target: Target, nuke: Nuke): Either[?, Impacted] = ???
+```
+
+---
+
+## Either ##
+
+Alegbraic Data Types (sealed families)
 
 ```scala
 sealed trait NukeException
-case object SystemOffline extends NukeException
-case object RotationNeedsOil extends NukeException
+case class SystemOffline() extends NukeException
+case class RotationNeedsOil() extends NukeException
 case class MissedByMeters(meters : Int) extends NukeException
+```
 
-def armNukes: Either[SystemOffline, Nuke] = ???
-def aim: Either[RotationNeedsOil,Target] = ???
-def launchNukes(target: Target, nuke: Nuke): Either[MissedByMeters, Impacted] = ???
+---
 
-def attack: Either[NukeException, Impacted] = {
+## Either ##
+
+Algebraic data types (sealed families)
+
+```scala
+def arm: Either[SystemOffline, Nuke] = Right(Nuke())
+def aim: Either[RotationNeedsOil,Target] = Right(Target())
+def launch(target: Target, nuke: Nuke): Either[MissedByMeters, Impacted] = Left(MissedByMeters(5))
+```
+
+---
+
+## Either ##
+
+Pain to deal with if your lang does not have proper Monads or syntax support
+
+```scala
+def attackImperative: Either[NukeException, Impacted] = {
   var result: Either[NukeException, Impacted] = null
-  val eitherNuke = armNukes
+  val eitherNuke = arm
   if (eitherNuke.isRight) {
     val eitherTarget = aim
     if (eitherTarget.isRight) {
-      result = launchNukes(tryTarget.toOption.get, tryNuke.toOption.get)
+      result = launch(eitherTarget.toOption.get, eitherNuke.toOption.get)
     } else {
-      result = Left(RotationNeedsOil)
+      result = Left(RotationNeedsOil())
     }
   } else {
-    result = Left(SystemOffline)
+    result = Left(SystemOffline())
   }
   result
 }
@@ -342,21 +464,21 @@ def attack: Either[NukeException, Impacted] = {
 Easy to work with if your lang supports monadic comprehensions
 
 ```scala
-sealed trait NukeException
-case object SystemOffline extends NukeException
-case object RotationNeedsOil extends NukeException
-case class MissedByMeters(meters : Int) extends NukeException
-
-def armNukes: Either[SystemOffline, Nuke] = ???
-def aim: Either[RotationNeedsOil,Target] = ???
-def launchNukes(target: Target, nuke: Nuke): Either[MissedByMeters, Impacted] = ???
-
-def attack: Either[NukeException, Impacted] = 
+def attackMonadic: Either[NukeException, Impacted] =
   for {
-    nuke <- armNukes
+    nuke <- arm
     target <- aim
-    impact <- launchNukes(nuke, target)
+    impact <- launch(target, nuke)
   } yield impact
+```
+
+---
+
+## Either ##
+
+Easy to work with if your lang supports monadic comprehensions
+
+```scala
 ```
 
 ---
@@ -365,28 +487,156 @@ Can we further generalize error handling and launch nukes on any `M[_]`?
 
 ---
 
-### MonadError[M[_], E] ###
+### (Monad|Applicative)Error[M[_], E] ###
 
 ```scala
-sealed trait NukeException
-case object SystemOffline extends NukeException
-case object RotationNeedsOil extends NukeException
-case class MissedByMeters(meters : Int) extends NukeException
-
-def armNukes: Either[SystemOffline, Nuke] = ???
-def aim: Either[RotationNeedsOil,Target] = ???
-def launchNukes(target: Target, nuke: Nuke): Either[MissedByMeters, Impacted] = ???
-
-def attack: Either[NukeException, Impacted] = 
-  for {
-    nuke <- armNukes
-    target <- aim
-    impact <- launchNukes(nuke, target)
-  } yield impact
+/**
+ * A monad that also allows you to raise and or handle an error value.
+ * This type class allows one to abstract over error-handling monads.
+ */
+trait MonadError[F[_], E] extends ApplicativeError[F, E] with Monad[F] {
+  ...
+}
 ```
 
 ---
 
-## Fatal errors ##
+### (Monad|Applicative)Error[M[_], E] ###
+ 
+Many useful methods to deal with potentially failed monads
 
-A concern that does not belong in Application code
+```scala
+def raiseError[A](e: E): F[A]
+def handleError[A](fa: F[A])(f: E => A): F[A]
+def attempt[A](fa: F[A]): F[Either[E, A]]
+def attemptT[A](fa: F[A]): EitherT[F, E, A]
+def recover[A](fa: F[A])(pf: PartialFunction[E, A]): F[A]
+def catchNonFatal[A](a: => A)(implicit ev: Throwable <:< E): F[A]
+def catchNonFatalEval[A](a: Eval[A])(implicit ev: Throwable <:< E): F[A]
+```
+
+---
+
+### (Monad|Applicative)Error[M[_], E] ###
+ 
+Cats instances available for
+
+```scala
+MonadError[Option, Unit]
+MonadError[Try, Throwable]
+MonadError[Either[E, ?], E]
+```
+
+---
+
+### (Monad|Applicative)Error[M[_], E] ###
+ 
+How can we generalize and implement this to any `M[_]`?
+
+```scala
+def arm: M[Nuke] = ???
+def aim: M[Target] = ???
+def launch(target: Target, nuke: Nuke): M[Impacted] = ???
+```
+
+---
+
+### (Monad|Applicative)Error[M[_], E] ###
+ 
+Higher Kinded Types!
+
+```scala
+def arm[M[_]]: M[Nuke] = ???
+def aim[M[_]]: M[Target] = ???
+def launch[M[_]](target: Target, nuke: Nuke): M[Impacted] = ???
+```
+
+---
+
+### (Monad|Applicative)Error[M[_], E] ###
+ 
+Typeclasses!
+
+```scala
+import cats._
+import cats.implicits._
+
+def arm[M[_] : NukeMonadError]: M[Nuke] = 
+  Nuke().pure[M]
+  
+def aim[M[_] : NukeMonadError]: M[Target] = 
+  Target().pure[M]
+  
+def launch[M[_] : NukeMonadError](target: Target, nuke: Nuke): M[Impacted] =
+  (MissedByMeters(5000): NukeException).raiseError[M, Impacted]
+```
+
+---
+
+### (Monad|Applicative)Error[M[_], E] ###
+ 
+An abstract program is born
+
+```scala
+def attack[M[_] : NukeMonadError]: M[Impacted] = 
+  (aim[M] |@| arm[M]).tupled.flatMap((launch[M] _).tupled)
+```
+
+---
+
+### (Monad|Applicative)Error[M[_], E] ###
+ 
+Provided there is an instance of `MonadError[M[_], A]` 
+for other types you abstract away the return type
+
+```scala
+attack[Either[NukeException, ?]]
+attack[Future[Either[NukeException, ?]]]
+```
+
+---
+
+### Abstraction ###
+ 
+- Benefits
+    - Safer code
+    - Less tests
+    - More Constrains
+    - More runtime choices
+
+- Issues
+    - Performance cost?
+    - Newbies & OOP dogmatics complain about legibility
+    - Advanced types + inference == higher compile times
+
+---
+
+### Recap ###
+ 
+What if my lang does not support some of these things?
+
+| *Error Handling* | *When to use*               | *Java* | *Kotlin* | *Scala* |
+|------------------|--------------------------- -|--------|----------|---------|
+| *Exceptions*     | ~Never                      | x      | x        | x       |
+| *Option*         | Modeling Absence            | ?      | x        | x       |
+| *Try*            | Capturing Exceptions        | ?      | ?        | x       |
+| *Either*         | Modeling Alternate Paths    | ?      | ?        | x       |
+| *MonadError*     | Abstracting away concerns   | -      | -        | x       |
+
+---
+
+### Recap ###
+ 
+What if my lang does not support some of these things?
+
+1. Build it yourself
+2. Ask lang designers to include HKTs, Typeclasses, ADT and others
+3. We are part of the future of programming
+
+---
+
+### Thanks! ###
+ 
+@raulraja @47deg
+
+---

@@ -1,39 +1,34 @@
-case class Country(isoCode: String)
+case class Nuke()
 
-case class Address(street: String, country: Option[Country])
+case class Target()
 
-case class Person(id: Int, address: Option[Address])
+case class Impacted()
 
-def getCountryImperative(person: Person): Option[Country] = {
-  var country: Option[Country] = null
-  if (person.address.isDefined) {
-    if (person.address.get.country.isDefined) {
-      country = person.address.get.country
+def arm: Option[Nuke] = None
+
+def aim: Option[Target] = None
+
+def launch(target: Target, nuke: Nuke): Option[Impacted] = Some(Impacted())
+
+def attackImperative: Option[Impacted] = {
+  var impact: Option[Impacted] = None
+  val optionNuke = arm
+  if (optionNuke.isDefined) {
+    val optionTarget = aim
+    if (optionTarget.isDefined) {
+      impact = launch(optionTarget.get, optionNuke.get)
     }
-    else {
-      country = None
-    }
-  } else {
-    country = None
   }
-  country
+  impact
 }
 
-def getCountryMonadic(person: Person): Option[Country] =
+def attackMonadic: Option[Impacted] =
   for {
-    address <- person.address
-    country <- address.country
-  } yield country
+    nuke <- arm
+    target <- aim
+    impact <- launch(target, nuke)
+  } yield impact
 
+attackImperative
 
-val personWithCountry =
-  Person(
-    id = 1,
-    address = Some(
-      Address(
-        street = "street name",
-        country = Some(
-          Country(isoCode = "ES")))))
-
-getCountryImperative(personWithCountry)
-getCountryMonadic(personWithCountry)
+attackMonadic

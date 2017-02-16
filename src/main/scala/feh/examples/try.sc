@@ -6,20 +6,20 @@ case class Target()
 
 case class Impacted()
 
-def armNukes: Try[Nuke] = Try(throw new RuntimeException("SystemOffline"))
+def arm: Try[Nuke] = Try(throw new RuntimeException("SystemOffline"))
 
 def aim: Try[Target] = Try(throw new RuntimeException("RotationNeedsOil"))
 
-def launchNukes(target: Target, nuke: Nuke): Try[Impacted] = Try(throw new RuntimeException("MissedByMeters"))
+def launch(target: Target, nuke: Nuke): Try[Impacted] = Try(throw new RuntimeException("MissedByMeters"))
 
 def attackImperative: Try[Impacted] = {
   var impact: Try[Impacted] = null
   var ex: Throwable = null
-  val tryNuke = armNukes
+  val tryNuke = arm
   if (tryNuke.isSuccess) {
     val tryTarget = aim
     if (tryTarget.isSuccess) {
-      impact = launchNukes(tryTarget.get, tryNuke.get)
+      impact = launch(tryTarget.get, tryNuke.get)
     } else {
       ex = tryTarget.failed.get
     }
@@ -31,9 +31,9 @@ def attackImperative: Try[Impacted] = {
 
 def attackMonadic: Try[Impacted] =
   for {
-    nuke <- armNukes
+    nuke <- arm
     target <- aim
-    impact <- launchNukes(target, nuke)
+    impact <- launch(target, nuke)
   } yield impact
 
 attackImperative

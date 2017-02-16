@@ -219,14 +219,19 @@ body {
   line-height: 1.2em;}
 
 .reveal code {
-  font-family: "pragmatapro"; }
+  font-family: "pragmatapro";
+  }
+
+.reveal strong {
+  color: #50fa7b;
+  }
 
 .reveal pre code {
 border:
   display: block;
   padding: 5px;
   overflow: auto;
-  max-height: 500px;
+  max-height: 600px;
   word-wrap: normal; }
 
 .reveal table {
