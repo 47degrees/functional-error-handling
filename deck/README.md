@@ -4,9 +4,9 @@
 
 ## Requirements
 
-1. Arm a Nuke launcher
-2. Aim toward a Target
-3. Launch a Nuke and impact the Target
+1. Arm a Nuke launcher <!-- .element: class="fragment" -->
+2. Aim toward a Target <!-- .element: class="fragment" -->
+3. Launch a Nuke and impact the Target <!-- .element: class="fragment" -->
 
 ---
 
@@ -154,20 +154,22 @@ Potentially costly to construct based on VM impl and your current Thread stack s
 
 Poor choices when using exceptions
 
-- Modeling absence
-- Modeling known business cases that result in alternate paths
-- Async boundaries over unprincipled APIs (callbacks)
-- When people have no access to your source code
+- Modeling absence <!-- .element: class="fragment" -->
+- Modeling known business cases that result in alternate paths <!-- .element: class="fragment" -->
+- Async boundaries over unprincipled APIs (callbacks) <!-- .element: class="fragment" -->
+- When people have no access to your source code <!-- .element: class="fragment" -->
 
 ---
 
 ## Exceptions
 
-- When you don't expect someone to recover from it
-- When you are contributor to a JVM in JVM internals
-- When you want to create caos and mayhem to overthrow the government
-- In this talk
-- When you know what you are doing
+Maybe OK if...
+
+- You don't expect someone to recover from it <!-- .element: class="fragment" -->
+- You are contributor to a JVM in JVM internals <!-- .element: class="fragment" -->
+- You want to create caos and mayhem to overthrow the government <!-- .element: class="fragment" -->
+- In this talk <!-- .element: class="fragment" -->
+- You know what you are doing <!-- .element: class="fragment" -->
 
 ---
 
@@ -598,22 +600,20 @@ attack[Future[Either[NukeException, ?]]]
 
 ### Abstraction ###
  
-- Benefits
-    - Safer code
-    - Less tests
-    - More Constrains
-    - More runtime choices
+- Benefits 
+    - Safer code <!-- .element: class="fragment" -->
+    - Less tests <!-- .element: class="fragment" -->
+    - More Constrains <!-- .element: class="fragment" -->
+    - More runtime choices <!-- .element: class="fragment" -->
 
-- Issues
-    - Performance cost?
-    - Newbies & OOP dogmatics complain about legibility
-    - Advanced types + inference == higher compile times
+- Issues <!-- .element: class="fragment" -->
+    - Performance cost? <!-- .element: class="fragment" -->
+    - Newbies & OOP dogmatics complain about legibility <!-- .element: class="fragment" -->
+    - Advanced types + inference == higher compile times <!-- .element: class="fragment" -->
 
 ---
 
 ### Recap ###
- 
-What if my lang does not support some of these things?
 
 | *Error Handling* | *When to use*               | *Java* | *Kotlin* | *Scala* |
 |------------------|--------------------------- -|--------|----------|---------|
@@ -629,9 +629,9 @@ What if my lang does not support some of these things?
  
 What if my lang does not support some of these things?
 
-1. Build it yourself
-2. Ask lang designers to include HKTs, Typeclasses, ADT and others
-3. We are part of the future of programming
+1. Build it yourself <!-- .element: class="fragment" -->
+2. Ask lang designers to include HKTs, Typeclasses, ADT and others <!-- .element: class="fragment" -->
+3. We are part of the future of programming <!-- .element: class="fragment" -->
 
 ---
 
