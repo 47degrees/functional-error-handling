@@ -51,7 +51,7 @@ def aim: Target = throw new RuntimeException("RotationNeedsOil")
 def launch(target: Target, nuke: Nuke): Impacted = Impacted()
 ```
 
-Break Referential transparency
+Breaks Referential transparency
 
 ---
 
