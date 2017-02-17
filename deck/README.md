@@ -476,15 +476,6 @@ def attackMonadic: Either[NukeException, Impacted] =
 
 ---
 
-## Either ##
-
-Easy to work with if your lang supports monadic comprehensions
-
-```scala
-```
-
----
-
 Can we further generalize error handling and launch nukes on any `M[_]`?
 
 ---
@@ -603,7 +594,6 @@ attack[Future[Either[NukeException, ?]]]
 - Benefits 
     - Safer code <!-- .element: class="fragment" -->
     - Less tests <!-- .element: class="fragment" -->
-    - More Constrains <!-- .element: class="fragment" -->
     - More runtime choices <!-- .element: class="fragment" -->
 
 - Issues <!-- .element: class="fragment" -->
