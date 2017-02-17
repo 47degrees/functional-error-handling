@@ -1,6 +1,12 @@
 # Functional Error Handling
 
-A talk about dealing with errors and exceptions in a functional way.
+Exceptions in OOP centric langs such as Java are abused for control flow and event signaling.
+Lack of proper support for Monads, Higher Kinded Types and other facilities leave lang users
+with no alternative but to choose happy paths as return types of method signatures.
+
+In this talk we will cover some examples regarding the misuse of exceptions and proper data types 
+such as `Option`, `Try`, `Either[E, A]` and `MonadError[M[_], E]` to model absence of values, failing 
+computations and alternate paths in method return types.
 
 - [PDF and slides on speakerdeck](https://speakerdeck.com/raulraja/functional-error-handling)
 - [Code samples](src/main/scala/feh/examples) 
