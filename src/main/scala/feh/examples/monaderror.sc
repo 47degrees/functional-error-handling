@@ -37,7 +37,6 @@ attack[Either[NukeException, ?]]
 
 type Result[A] = Future[Either[NukeException, A]]
 
-
 implicit val resultMonadError: MonadError[Result, NukeException] =
   new MonadError[Result, NukeException] {
     override def raiseError[A](e: NukeException): Result[A] = Future.successful(Left(e))
