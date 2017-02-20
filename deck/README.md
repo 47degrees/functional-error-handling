@@ -167,7 +167,7 @@ Maybe OK if...
 
 - You don't expect someone to recover from it <!-- .element: class="fragment" -->
 - You are contributor to a JVM in JVM internals <!-- .element: class="fragment" -->
-- You want to create caos and mayhem to overthrow the government <!-- .element: class="fragment" -->
+- You want to create chaos and mayhem to overthrow the government <!-- .element: class="fragment" -->
 - In this talk <!-- .element: class="fragment" -->
 - You know what you are doing <!-- .element: class="fragment" -->
 
