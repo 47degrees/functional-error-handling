@@ -629,4 +629,14 @@ What if my lang does not support some of these things?
  
 @raulraja @47deg
 
+Deck:
+
+- https://speakerdeck.com/raulraja/functional-error-handling
+- https://github.com/47deg/functional-error-handling
+
+Credits:
+
+- [Doctor Strange Love image and preview clip](https://en.wikipedia.org/wiki/Dr._Strangelove)
+- [The Hidden Performance costs of instantiating Throwables](http://normanmaurer.me/blog/2013/11/09/The-hidden-performance-costs-of-instantiating-Throwables/)
+
 ---
